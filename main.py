@@ -1,10 +1,9 @@
 import sqlite3
-from sys import path
-path.insert(1, 'D:\\Dokumenty\\Python Project\\vinted')
+import config
 from cryptography.fernet import Fernet
 from os import getcwd
 
-dir_dbase = dir_dbase = r'D:\Dokumenty\Python Project\vinted\VINTED-dbase.db'
+
 # class Vinted:
 #     def dbase_session(self):
         # self.con = sqlite3.connect(r'D:\Dokumenty\Python Project\vinted\VINTED-dbase.db')   #dir_dbase
