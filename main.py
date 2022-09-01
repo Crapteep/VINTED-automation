@@ -1,12 +1,12 @@
 import sqlite3
-import config
+from config import *
 from cryptography.fernet import Fernet
 from os import getcwd
 
 
 # class Vinted:
 #     def dbase_session(self):
-        # self.con = sqlite3.connect(r'D:\Dokumenty\Python Project\vinted\VINTED-dbase.db')   #dir_dbase
+        # self.con = sqlite3.connect(dir_dbase)
         # self.c = self.con.cursor()
 
 
