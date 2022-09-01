@@ -18,7 +18,7 @@ dir_dbase = dir_dbase = r'D:\Dokumenty\Python Project\vinted\VINTED-dbase.db'
 class User:
     "This class has basic info about your account"
     def __init__(self) -> None:
-        self.con = sqlite3.connect(r'D:\Dokumenty\Python Project\vinted\VINTED-dbase.db')   #dir_dbase
+        self.con = sqlite3.connect(dir_dbase)   #dir_dbase
         self.c = self.con.cursor()
 
         self.account_id = None
@@ -144,14 +144,3 @@ new.load_account_details()
 
     #odszyfrowywanie hasla
     
-
-
-
-
-# acc1 = Account()
-# acc1.create_new_account()
-
-# print(acc1.dir_mykey)
-
-
-# print(getcwd())
