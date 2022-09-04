@@ -1,0 +1,106 @@
+#: import RiseInTransition kivy.uix.screenmanager.RiseInTransition
+#: import SlideTransition kivy.uix.screenmanager.SlideTransition
+
+
+WindowManager:
+
+    transition: RiseInTransition(duration=0.2)
+    MenuWindow:
+    AccountWindow:
+
+
+
+<MenuWindow>:
+    name: 'menu'
+
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
+        spacing: 20
+
+        BoxLayout:
+            size_hint: 1, 0.5
+        
+        Button:
+            text: "Login in"
+            size_hint: 0.3, 0.3
+            pos_hint: { "center_x": 0.5 }
+
+        Button:
+            text: "Accounts"
+            size_hint: 0.3, 0.3
+            pos_hint: { "center_x": 0.5 }
+            on_release:
+                app.root.current = "account"
+                #root.manager.transition.direction = 'left'
+                root.on_button_click()
+        Button:
+            text: "Settings"
+            size_hint: 0.3, 0.3
+            pos_hint: { "center_x": 0.5 }
+
+        BoxLayout:
+            size_hint: 1, 0.5
+
+<AccountWindow>:
+    name: 'account'
+    size: root.width, root.height
+    BoxLayout:
+        spacing: root.width*0.007+root.height*0.007
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint: 1, None
+            orientation: 'horizontal'
+            cols: 3
+            Button:
+                tansition: SlideTransition()
+                text: "Go back"
+                size_hint: 1, None
+                on_release:
+                    app.root.current = "menu"
+                # pos_hint: { "center_x": 0.2 }
+
+            Label:
+                text: "Accounts list:"
+                font_size: 45
+                
+                size_hint: 1, None
+                # pos_hint: { "center_x": 0.5}
+            BoxLayout:
+
+
+        ScrollViewExample:
+            StackLayoutExample:
+
+        AccountEditButtons:
+            
+            
+
+<ScrollViewExample@ScrollView>:
+    size: root.width, root.height
+
+<StackLayoutExample>:
+    size_hint: 1, None
+    size: root.width, root.height
+    height: self.minimum_height
+
+    
+
+
+<AccountEditButtons@BoxLayout>:
+    size: root.width, root.height
+    size_hint: 1, None
+    height: self.minimum_height
+    orientation: "horizontal"
+
+    Button:
+        text: "Edit account"
+        size_hint: 1, None
+    
+    Button:
+        text: "Add new account"
+        size_hint: 1, None
+
+    Button:
+        text: "Delete account"
+        size_hint: 1, None

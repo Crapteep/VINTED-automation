@@ -1,8 +1,8 @@
-from classes import *
+from classes import VintedApp
 
 
 def main():
-    VintedApp.run()
+    VintedApp().run()
     
 
 if __name__ == "__main__":

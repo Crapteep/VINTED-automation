@@ -12,6 +12,28 @@ from selenium import webdriver
 import pyautogui as pygui
 import re
 
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.widget import Widget
+from kivy.uix.button import Button
+from kivy.metrics import dp
+from kivy.config import Config
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import SlideTransition
+from kivy.lang import Builder
+from kivy.graphics.vertex_instructions import Line
+from kivy.graphics.context_instructions import Color
+from kivy.graphics.vertex_instructions import Rectangle
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.stacklayout import StackLayout
+from kivy.uix.checkbox import CheckBox
+from kivy.uix.anchorlayout import AnchorLayout
+
+
+
+Config.set('graphics', 'width', '1366')
+Config.set('graphics', 'height', '820')
+
 class Session:
     def __init__(self) -> None:
         account = User()
@@ -100,7 +122,8 @@ class User:
             return True
 
 
-    def show_all_existing_accounts(self) -> None:
+    def show_all_existing_accounts(self) -> list:
+        print('Wczytuje dane!')
         select_query = '''SELECT acc_id, login
                         FROM Accounts'''
         self.c.execute(select_query)
@@ -108,14 +131,15 @@ class User:
 
         if len(self.accounts_list) != 0:
             #wyswietlanie listy kont - domyslnie w gui
-            print('\nAccount list: \n')
+            pass
+            # print('\nAccount list: \n')
 
-            for count, account in enumerate(self.accounts_list):
-                print(f'{count+1}. {account[0]} - {account[1]}')
+            # for count, account in enumerate(self.accounts_list):
+            #     print(f'{count+1}. {account[0]} - {account[1]}')
 
         else:
             print('There are no accounts saved in the database. \nPlease create a new account.')    #do zrobienia w gui
-        
+        return self.accounts_list
 
     def delete_account():   #zrobic usuwanie + powiadomienie ze zostana wszystkie inne info nt przedmiotow usuniete
         pass
@@ -208,3 +232,63 @@ class Vinted:
 
                 else:
                     print('This notification exist!')
+
+
+
+
+
+
+
+class MenuWindow(Screen):
+    def on_button_click(self):
+        print('hej, działa!')
+        print(self.width, self.height)
+        print(self.width*0.008 + self.height*0.008)
+
+class AccountWindow(Screen):
+    pass
+
+class WindowManager(ScreenManager):
+    pass
+
+
+class StackLayoutExample(StackLayout):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.account = User()
+        self.account_list = self.account.show_all_existing_accounts()
+        self.orientation = "lr-tb"
+        self.spacing = 10
+        # self.orientation = 'vertical'
+
+        for count, account in enumerate(self.account_list):
+            #size = dp(100) + i*10
+            size = dp(50)
+            b = Button(text=f'{count+1}. {account[0]} - {account[1]}', size_hint=(1, None), size=(dp(10), size))
+            self.add_widget(b)
+
+
+
+# class ScrollViewAccounts(ScrollView):
+#     pass
+
+kv = Builder.load_file('vinted.kv')
+
+
+class VintedApp(App, ):
+    def build(self):
+        # self.account = User()
+        # self.account_list = self.account.show_all_existing_accounts()
+        return kv
+        # sm = ScreenManager(transition=SlideTransition())
+        # sm.add_widget(MenuScreen(name="menu_screen"))
+        # sm.add_widget(AccountScreen(name="account_screen"))
+        # # sm.transition = NoTransition()
+        # # sm.add_widget(Test(name="test"))
+
+        # return sm
+
+
+
+
