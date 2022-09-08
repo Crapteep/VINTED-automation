@@ -1,3 +1,7 @@
+from ast import Index
+from asyncio import events
+from json import load
+from msilib.schema import Property
 import sqlite3
 from config import *
 from urls import *
@@ -28,29 +32,17 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.anchorlayout import AnchorLayout
+from kivy.properties import StringProperty, BooleanProperty
+from kivy.properties import Clock
+from kivy.properties import ObjectProperty
+from kivy.properties import ListProperty
+from kivy.uix.dropdown import DropDown
+
+Config.set('graphics', 'width', '1200')
+Config.set('graphics', 'height', '900')
 
 
-
-Config.set('graphics', 'width', '1366')
-Config.set('graphics', 'height', '820')
-
-class Session:
-    def __init__(self) -> None:
-        account = User()
-        account.load_account_details()
-        vinted = Vinted(account)
-        vinted.log_in_to_account()
-        vinted.wait_until_complete_captcha()
-        vinted.find_new_likes()
-        time.sleep(10)
-
-
-class Item:
-    def __init__(self) -> None:
-        pass
-    
-
-class User:
+class User():
     "This class has basic info about your account"
     def __init__(self) -> None:
         self.con = sqlite3.connect(dir_dbase)   #dir_dbase
@@ -59,7 +51,11 @@ class User:
         self.account_id = None
         self.username = None
         self.password = None
+        self.accounts_list = []
+        self.load_accounts()
 
+    def __del__(self):
+        self.con.close()
 
     def create_new_account(self) -> None:       #ta metoda w gui
         print("Creating a new account.")
@@ -70,8 +66,8 @@ class User:
         self.insert_new_account_into_dbase()
 
     
-    def load_account_details(self):
-        self.show_all_existing_accounts()
+    def load_accountsount_details(self):
+        self.load_accounts()
         if self.accounts_list:
             running = True
             while running:
@@ -102,7 +98,7 @@ class User:
                             VALUES(?,?,?)'''
             self.c.execute(insert_query, (self.account_id, self.username, self.password))
             self.con.commit()
-
+            self.load_accounts()
             print('Account added successfully!')    #tez w gui do zrobienia
 
         else:
@@ -122,24 +118,17 @@ class User:
             return True
 
 
-    def show_all_existing_accounts(self) -> list:
+    def load_accounts(self) -> list:
+        self.accounts_list.clear()
         print('Wczytuje dane!')
-        select_query = '''SELECT acc_id, login
+        select_query = '''SELECT login
                         FROM Accounts'''
         self.c.execute(select_query)
-        self.accounts_list = self.c.fetchall()
+        for item in self.c.fetchall():
+            self.accounts_list.append(item[0])
 
-        if len(self.accounts_list) != 0:
-            #wyswietlanie listy kont - domyslnie w gui
-            pass
-            # print('\nAccount list: \n')
 
-            # for count, account in enumerate(self.accounts_list):
-            #     print(f'{count+1}. {account[0]} - {account[1]}')
 
-        else:
-            print('There are no accounts saved in the database. \nPlease create a new account.')    #do zrobienia w gui
-        return self.accounts_list
 
     def delete_account():   #zrobic usuwanie + powiadomienie ze zostana wszystkie inne info nt przedmiotow usuniete
         pass
@@ -169,126 +158,127 @@ class User:
 
         self.password = f.decrypt(encrypted_password).decode("utf-8")
 
-
-class Vinted:
-    def __init__(self, account) -> None:
-        self.account = account
-
-        option = webdriver.EdgeOptions()
-        option.add_argument('inprivate')
-        s = Service(dir_webdriver)
-        self.browser = webdriver.Edge(service=s, options=option)
-        self.browser.implicitly_wait(RESPOND_TIME)
-        self.browser.maximize_window()
+db = User()
 
 
-    def log_in_to_account(self) -> None:
-        self.browser.get(url_login)
-        self.browser.find_element(By.ID, 'onetrust-accept-btn-handler').click()
-        self.browser.find_element(By.ID, 'username').send_keys(self.account.username)
-        self.browser.find_element(By.ID, 'password').send_keys(self.account.password + Keys.ENTER)
 
-
-    def wait_until_complete_captcha(self) -> None:
-        while True:
-            if self.browser.title == 'Vinted':
-                break
-            else:
-                pygui.alert('Complete captcha and press "Finish"!', 'Captcha', 'Finish!')
     
 
-    def suggest_lower_price(self) -> None:
-        pass
+
+#Screens
+class MainWindow(Screen):
+    target = ObjectProperty()
+    number_of_acc = len(db.accounts_list)
+    event_list = []
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        Clock.schedule_interval(self.update, 1/60)
 
 
-    def find_new_likes(self) -> None:
-        self.browser.get(url_notification)
-        notifications = self.browser.find_elements(By.CLASS_NAME, 'u-disable-hover')
+    def update(self, dt):
+        
+        if self.manager.current == 'accounts' and not self.event_list:
+            event = Clock.create_trigger(MyAccountsWindow.load_accounts(self), 2)
+            event()
+            self.event_list.append(event)
+        else:
+            try:
+                self.event_list[0].cancel()
+                self.event_list.clear()
+            except:
+                pass
+                
+        if self.manager.current == 'login':
+            self.manager.get_screen("login").ids.spinner_id.values = db.accounts_list
+        
 
-        for item in notifications:
-            url = item.get_attribute('href')
-            if KEY_STRING in url:
-                compiler = re.compile(r'/\d\d\d\d\d\d\d\d\d\d/')
-                item_id = compiler.findall(url)
-                item_id = int(item_id[0].replace('/', ''))
-                username = item.find_element(By.XPATH, './/a').text
+
+
+class LoginInWindow(Screen):
+    acc_list = ListProperty(None)
+    
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+
+    def spinner_clicked(self, value):
+        self.ids.click_label.text = f'You selected:{value}'
+
+
+
+class MyAccountsWindow(Screen):
+    # acc1 = ObjectProperty(None)
+    # acc2 = ObjectProperty(None)
+    # acc3 = ObjectProperty(None)
+    # acc4 = ObjectProperty(None)
+    # acc5 = ObjectProperty(None)
+    def on_reload(self):
+        db.create_new_account()
+
+
+    def load_accounts(self, *args):
+        obj = self.manager.get_screen("accounts").ids
+        print('\n')
+        print('num_of_acc', self.number_of_acc)
+        print('obecna liczba kont:', len(db.accounts_list))
+        print('\n')
+        if self.manager.current == "accounts":
+            if self.number_of_acc != len(db.accounts_list):
+                db.load_accounts()
+                self.number_of_acc = len(db.accounts_list)
+
+            for i in range(5):
+                try:
+                    obj[f'acc{str(i+1)}'].text = db.accounts_list[i]+' - press to show more info'
             
-                self.account.c.execute('''SELECT *
-                                        FROM Notifications
-                                        WHERE username=? 
-                                        AND item_id=?
-                                        AND acc_id=?''', (username, item_id, self.account.account_id))
-
-                entry = self.account.c.fetchone()
-
-                if entry is None:
-                    notification_time = item.find_element(By.XPATH, './/h3//span').get_attribute('title')
-                    notification_date = date_extract(notification_time)
-                    self.account.c.execute('''INSERT INTO Notifications(acc_id, username, item_id, url, created, modified)
-                                            VALUES(?,?,?,?,?,datetime('now', 'localtime'))''',
-                                            (self.account.account_id, username, item_id, url, notification_date))
-                    self.account.con.commit()
-                    print('New record added!')
-
-                else:
-                    print('This notification exist!')
+                except IndexError:
+                    obj[f'acc{str(i+1)}'].text = 'Empty!'
 
 
-
-
-
-
-
-class MenuWindow(Screen):
-    def on_button_click(self):
-        print('hej, działa!')
-        print(self.width, self.height)
-        print(self.width*0.008 + self.height*0.008)
-
-class AccountWindow(Screen):
+class AppSettingsWindow(Screen):
     pass
 
+class AddAccountWindow(Screen):
+    email = ObjectProperty(None)
+    password = ObjectProperty(None)
+    acc_id = ObjectProperty(None)
+    
+    def clear_inputs_fields(self):
+        self.account_id_input.text = ''
+        self.password_input.text = ''
+        self.username_input.text = ''
+
+
+
+
+
+
+
+
+#screen manager
 class WindowManager(ScreenManager):
     pass
 
 
-class StackLayoutExample(StackLayout):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
-        self.account = User()
-        self.account_list = self.account.show_all_existing_accounts()
-        self.orientation = "lr-tb"
-        self.spacing = 10
-        # self.orientation = 'vertical'
-
-        for count, account in enumerate(self.account_list):
-            #size = dp(100) + i*10
-            size = dp(50)
-            b = Button(text=f'{count+1}. {account[0]} - {account[1]}', size_hint=(1, None), size=(dp(10), size))
-            self.add_widget(b)
+class AccountPrinterLayout(StackLayout):
+    pass
 
 
 
-# class ScrollViewAccounts(ScrollView):
-#     pass
-
-kv = Builder.load_file('vinted.kv')
 
 
-class VintedApp(App, ):
+
+kv = Builder.load_file("test_kv.kv")
+
+
+class VintedApp(App):
     def build(self):
-        # self.account = User()
-        # self.account_list = self.account.show_all_existing_accounts()
         return kv
-        # sm = ScreenManager(transition=SlideTransition())
-        # sm.add_widget(MenuScreen(name="menu_screen"))
-        # sm.add_widget(AccountScreen(name="account_screen"))
-        # # sm.transition = NoTransition()
-        # # sm.add_widget(Test(name="test"))
+    
 
-        # return sm
+if __name__ == "__main__":
+    VintedApp().run()
 
 
-
-
+    #zrobic tak zeby moznz blylo odswiezac

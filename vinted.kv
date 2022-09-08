@@ -1,106 +1,281 @@
-#: import RiseInTransition kivy.uix.screenmanager.RiseInTransition
-#: import SlideTransition kivy.uix.screenmanager.SlideTransition
+
 
 
 WindowManager:
+    MainWindow:
+        id: MainWindow
+    LoginInWindow:
+    MyAccountsWindow:
+        id: MyAccountsWindow
+    AppSettingsWindow:
+    AddAccountWindow:
 
-    transition: RiseInTransition(duration=0.2)
-    MenuWindow:
-    AccountWindow:
-
-
-
-<MenuWindow>:
-    name: 'menu'
+    
+<MainWindow>:
+    name: 'main'
 
     BoxLayout:
         orientation: "vertical"
         size: root.width, root.height
         spacing: 20
+        padding: 10
 
         BoxLayout:
             size_hint: 1, 0.5
         
+
         Button:
             text: "Login in"
             size_hint: 0.3, 0.3
             pos_hint: { "center_x": 0.5 }
+            on_release:
+                app.root.current = "login"
 
         Button:
             text: "Accounts"
             size_hint: 0.3, 0.3
             pos_hint: { "center_x": 0.5 }
             on_release:
-                app.root.current = "account"
-                #root.manager.transition.direction = 'left'
-                root.on_button_click()
+                app.root.current = "accounts"
+
         Button:
             text: "Settings"
             size_hint: 0.3, 0.3
             pos_hint: { "center_x": 0.5 }
+            on_release:
+                app.root.current = "settings"
+
+
 
         BoxLayout:
             size_hint: 1, 0.5
 
-<AccountWindow>:
-    name: 'account'
-    size: root.width, root.height
-    BoxLayout:
-        spacing: root.width*0.007+root.height*0.007
-        orientation: 'vertical'
-        BoxLayout:
-            size_hint: 1, None
-            orientation: 'horizontal'
-            cols: 3
-            Button:
-                tansition: SlideTransition()
-                text: "Go back"
-                size_hint: 1, None
-                on_release:
-                    app.root.current = "menu"
-                # pos_hint: { "center_x": 0.2 }
 
+
+
+
+<LoginInWindow>:
+    name: 'login'
+    spinner_id: spinner_id
+
+    BoxLayout:
+        orientation: 'vertical'
+        size: root.width, root.height
+
+        BoxLayout:
+            orientation: 'horizontal'
+            Label:
+                text: ''
+            Label:
+                id: click_label
+                text: 'Choose your account'
+                font_size: 32
+            Button:
+                text: 'go back'
+                on_release: app.root.current = 'main'
+
+        Spinner:
+            id: spinner_id
+            text: "None"
+            values: []
+            on_text: root.spinner_clicked(spinner_id.text)
+        Label:
+            text:''
+
+
+
+
+<MyAccountsWindow>:
+    name: 'accounts'
+
+    acc1: acc1
+    acc2: acc2
+    acc3: acc3
+    acc4: acc4
+    acc5: acc5
+    # txt: txt
+    size: root.width, root.height
+    
+    BoxLayout:
+        
+        spacing: root.width*0.007+root.height*0.007
+        size: root.width, root.height
+        orientation: 'vertical'
+        padding: 10
+
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: "20"
+            size_hint: 1, None
+
+            BoxLayout:
+                size: root.width, root.height
+                
+                BoxLayout:
+                    orientation: 'horizontal'
+                    size_hint: 1, 1
+                    Button:
+                        text: "Go back"
+                        # size_hint: 1, 1
+                        on_release:
+                            # root.test()
+                            app.root.current = "main"
+                    BoxLayout:
+                        
             Label:
                 text: "Accounts list:"
                 font_size: 45
                 
                 size_hint: 1, None
-                # pos_hint: { "center_x": 0.5}
+                pos_hint: { "center_x": 0.5 }
+
             BoxLayout:
-
-
-        ScrollViewExample:
-            StackLayoutExample:
-
-        AccountEditButtons:
+                size: root.width, root.height
+                
+                BoxLayout:
+                    orientation: 'horizontal'
+                    size_hint: 1, 1
+                    BoxLayout:
+                    Button:
+                        text: "Add new account!"
+                        on_release:
+                            # root.on_reload()
+                            app.root.current = 'add_new_account'
+                        
+        BoxLayout:
+            padding: 10
+            spacing: 20
+            orientation: 'vertical'
+            size: root.width, root.height
+            size_hint: .7, 1
+            pos_hint: { "center_x": 0.5 }
+            Button:
+                id: acc1
+                text: 't'
+                on_release:
+                    # root.on_click()
             
-            
+            Button:
+                id: acc2
+                text: "Click here to add an account!"
+                on_release:
+                    # load_accounts(self)
 
-<ScrollViewExample@ScrollView>:
-    size: root.width, root.height
+            Button:
+                id: acc3
+                text: "Click here to add an account!"
+                on_release:
+                    # root.on_click(self)
 
-<StackLayoutExample>:
+
+            Button:
+                id: acc4
+                text: "Click here to add an account!"
+                on_release:
+                    # root.on_click(self)
+
+
+            Button:
+                id: acc5
+                text: "Click here to add an account!"
+                on_release:
+                    # root.on_click(self)
+
+
+
+<AccountPrinterLayout>:
     size_hint: 1, None
     size: root.width, root.height
     height: self.minimum_height
 
+
+<AppSettingsWindow>:
+    name: 'settings'
+
+<AddAccountWindow>:
+    name: 'add_new_account'
+    username_input: username_input
+    account_id_input: account_id_input
+    password_input: password_input
+    BoxLayout:
+        orientation: "horizontal"
+        BoxLayout:
+            AnchorLayout:
+                anchor_x: "center"
+                anchor_y: "top"
+                Button:
+                    text: "Go back"
+                    size_hint: 1, 0.1
+                    on_release:
+                        root.clear_inputs_fields()
+                        app.root.current = "accounts"
+            BoxLayout:
     
+        BoxLayout:
+            size: root.width, root.height
+            # height: self.minimum_height
+            orientation: "vertical"
+            spacing: 20
+            size_hint: 1, 0.8
+            pos_hint: { "y": 0.2 }
+
+            
+            Label:
+                text: "Login in"
+                # font_size: 50
+                size_hint: 1, 0.2
+                width: "300dp"
+                pos_hint: { "center_x": 0.5 }
+
+            Label:
+                text: "USERNAME :"
+                size_hint: 1, 0.2
+                pos_hint: { "center_x": 0 }
+
+            TextInput:
+                id: username_input
+                font_size: 28
+                size_hint: 1, 0.2
+                multiline: False
 
 
-<AccountEditButtons@BoxLayout>:
-    size: root.width, root.height
-    size_hint: 1, None
-    height: self.minimum_height
-    orientation: "horizontal"
+            Label:
+                text: "ACCOUNT ID :"
+                size_hint: 1, 0.2
+                pos_hint: { "center_x": 0 }
 
-    Button:
-        text: "Edit account"
-        size_hint: 1, None
-    
-    Button:
-        text: "Add new account"
-        size_hint: 1, None
+            TextInput:
+                id: account_id_input
+                font_size: 28
+                size_hint: 1, 0.2
+                multiline: False
 
-    Button:
-        text: "Delete account"
-        size_hint: 1, None
+            Label:
+                text: "PASSWORD :"
+                size_hint: 1, 0.2
+                pos_hint: { "center_x": 0 }
+
+            TextInput:
+                id: password_input
+                font_size: 28
+                size_hint: 1, 0.2
+                multiline: False
+                password: True
+
+            BoxLayout:
+                text: "PASSWORD :"
+                size_hint: 1, 0.2
+                pos_hint: { "center_x": 0 }
+
+            Button:
+                id: "button"
+                text: "Add account!"
+                size_hint: 1, 0.4
+                # disabled: not root.sumbit_enabled
+                on_release:
+                    # root.on_sumbit_click()
+                    root.clear_inputs_fileds()
+                    app.root.current = "accounts"
+
+            
+        BoxLayout:
