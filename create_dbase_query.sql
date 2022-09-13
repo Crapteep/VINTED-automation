@@ -13,7 +13,7 @@ CREATE TABLE myItems
   is_sold INT NOT NULL,
   is_available INT NOT NULL,
   url VARCHAR NOT NULL,
-  FOREIGN KEY (acc_id) REFERENCES Accounts(acc_id)
+  FOREIGN KEY (acc_id) REFERENCES Accounts(acc_id) ON DELETE CASCADE
 );
 
 CREATE TABLE itemInfo
@@ -28,7 +28,7 @@ CREATE TABLE itemInfo
   color VARCHAR NOT NULL,
   real_price INT NOT NULL,
   date date NOT NULL,
-  FOREIGN KEY (item_id) REFERENCES myItems(item_id)
+  FOREIGN KEY (item_id) REFERENCES myItems(item_id) ON DELETE CASCADE
 );
 
 CREATE TABLE Photos
@@ -36,7 +36,7 @@ CREATE TABLE Photos
   ID INTEGER PRIMARY KEY AUTOINCREMENT,
   item_id INT NOT NULL,
   url VARCHAR NOT NULL,
-  FOREIGN KEY (item_id) REFERENCES itemInfo(item_id)
+  FOREIGN KEY (item_id) REFERENCES itemInfo(item_id) ON DELETE CASCADE
 );
 CREATE TABLE Notifications
 (

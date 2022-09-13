@@ -1,12 +1,16 @@
 from ast import Index
 from asyncio import events
+from calendar import c
+from genericpath import exists
 from json import load
 from msilib.schema import Property
+from optparse import Values
 import sqlite3
 from config import *
 from urls import *
 from functions import *
 import time
+import os
 from cryptography.fernet import Fernet
 from os import getcwd
 from selenium.webdriver.common.keys import Keys
@@ -42,130 +46,106 @@ Config.set('graphics', 'width', '1200')
 Config.set('graphics', 'height', '900')
 
 
-class User():
+class Database():
     "This class has basic info about your account"
-    def __init__(self) -> None:
-        self.con = sqlite3.connect(dir_dbase)   #dir_dbase
+    def __init__(self, dbase_path) -> None:
+        self.con = sqlite3.connect(dbase_path)   #dir_dbase
         self.c = self.con.cursor()
 
-        self.account_id = None
-        self.username = None
-        self.password = None
-        self.accounts_list = []
-        self.load_accounts()
 
     def __del__(self):
         self.con.close()
 
-    def create_new_account(self) -> None:       #ta metoda w gui
-        print("Creating a new account.")
-        self.username = input("Type username: ")
-        self.account_id = int(input("Type account ID: "))
-        self.password = input("Type password: ")
 
-        self.insert_new_account_into_dbase()
+    def create_new_account(self, id, username, password) -> None:       #ta metoda w gui
+        entry = self.fetchall_record(columns='*', table='Accounts', conditions={'acc_id': id})
 
+        if not entry:
+            encrypted_password = self._encrypt_password(id, password)
+            self.insert_record('Accounts', values=[id, username, encrypted_password])
+        else:
+            print(f'Account with id: {id} already exists!')
     
-    def load_accountsount_details(self):
-        self.load_accounts()
-        if self.accounts_list:
-            running = True
-            while running:
-                acc_number = int(input('Select the number off account you want to log in to: '))
-                if acc_number < 1 or acc_number > len(self.accounts_list):
-                    print('Enter the correct account number.')
 
-                else:
-                    self.account_id = self.accounts_list[acc_number - 1][0]
-                    self.username = self.accounts_list[acc_number - 1][1]
-                    
-                    select_query = '''SELECT password
-                                        FROM Accounts
-                                        WHERE login=? AND acc_id=?'''
-                    self.c.execute(select_query, (self.username, self.account_id,))
-                    encrypted_password = self.c.fetchone()
-                    self._decrypt_password(encrypted_password[0])
-                    running = False
-        print('\nThe data has been loaded successfully!')
+    def load_account_data(self, id : int) -> None:
+        data = self.fetchall_record(columns=['login', 'password'], table='Accounts', conditions={'acc_id': id})
+        username, encrypted_password = data[0]
+        password = self._decrypt_password(id, encrypted_password)
+
+        return username, password
 
 
-    def insert_new_account_into_dbase(self) -> None:
-        is_exist = self.did_account_existing(self.account_id)
+    def insert_record(self, table : str, values : list) -> None:
+        self.c.execute(f'''INSERT OR IGNORE INTO {table}
+                        VALUES({','.join(['?' for _ in values])})''', values)
+        self.con.commit()
 
-        if not is_exist:
-            self._encrypt_password()
-            insert_query = '''INSERT OR IGNORE INTO Accounts(acc_id, login, password)
-                            VALUES(?,?,?)'''
-            self.c.execute(insert_query, (self.account_id, self.username, self.password))
-            self.con.commit()
-            self.load_accounts()
-            print('Account added successfully!')    #tez w gui do zrobienia
+
+    def fetchall_record(self, columns : list, table : str, conditions : dict) -> list:
+        values = conditions.values()
+        self.c.execute(f'''SELECT {', '.join([f'{column}' for column in columns])}
+                        FROM {table}
+                        WHERE {' and '.join([f'{condition}=?' for condition in conditions])}''',
+                        tuple(values))
+     
+        return self.c.fetchall()
+
+
+    def delete_record(self, table: str, conditions : dict) -> None:   #zrobic usuwanie + powiadomienie ze zostana wszystkie inne info nt przedmiotow usuniete
+        values = conditions.values()
+        self.c.execute(f'''DELETE FROM {table}
+                        WHERE {' AND '.join([f'{condition}=?' for condition in conditions])}''',
+                        tuple(values))
+        self.con.commit()
+        
+    
+    
+    def delete_account(self, id : int, input_password : str) -> None: #hasło musi być poprawne żeby usunać konto z bazy!
+
+        username, password = self.load_account_data(id)
+        if input_password == password:
+            self.delete_record(table='Accounts', conditions={'acc_id' : id})
+
+            path = getcwd()
+            dir_mykey = path + f'\\mykey_{str(id)}'
+            try:
+                os.remove(dir_mykey)
+            except:
+                print('File not found!')
 
         else:
-            print('An account with ID: %s already exists!'%self.account_id)    #powiadomienie w gui ze konto istnieje juz
+            print('Wrong password!')
 
 
-    def did_account_existing(self, account_id : int) -> bool:
-        select_query = '''SELECT *
-                        FROM Accounts
-                        WHERE acc_id=?'''
-        self.c.execute(select_query, (str(account_id),))
-        entry = self.c.fetchone()
-
-        if entry is None:
-            return False
-        else:
-            return True
-
-
-    def load_accounts(self) -> list:
-        self.accounts_list.clear()
-        print('Wczytuje dane!')
-        select_query = '''SELECT login
-                        FROM Accounts'''
-        self.c.execute(select_query)
-        for item in self.c.fetchall():
-            self.accounts_list.append(item[0])
-
-
-
-
-    def delete_account():   #zrobic usuwanie + powiadomienie ze zostana wszystkie inne info nt przedmiotow usuniete
-        pass
-
-
-    def _encrypt_password(self) -> None:
+    def _encrypt_password(self, id, password) -> None:
         key = Fernet.generate_key()
-        print(getcwd())
 
-        with open(f'mykey_{str(self.account_id)}', 'wb') as mykey:
+        with open(f'mykey_{str(id)}', 'wb') as mykey:
             mykey.write(key)
-        print(f'mykey_{str(self.account_id)}')
+        print(f'mykey_{str(id)}')
 
         f = Fernet(key)
+        return f.encrypt(password.encode())
+       
 
-        self.password = f.encrypt(self.password.encode())
-
-
-    def _decrypt_password(self, encrypted_password) -> None:
+    def _decrypt_password(self, id, encrypted_password) -> None:
         path = getcwd()
-        dir_mykey = path + f'\\mykey_{str(self.account_id)}'
+        dir_mykey = path + f'\\mykey_{str(id)}'
 
         with open(dir_mykey, 'rb') as mykey:
             key = mykey.read()
 
         f = Fernet(key)
+        return f.decrypt(encrypted_password).decode("utf-8")
 
-        self.password = f.decrypt(encrypted_password).decode("utf-8")
-
-db = User()
+db = Database()
 
 
 
     
 
 
-#Screens
+Screens
 class MainWindow(Screen):
     target = ObjectProperty()
     number_of_acc = len(db.accounts_list)
@@ -177,20 +157,39 @@ class MainWindow(Screen):
 
     def update(self, dt):
         
-        if self.manager.current == 'accounts' and not self.event_list:
-            event = Clock.create_trigger(MyAccountsWindow.load_accounts(self), 2)
-            event()
-            self.event_list.append(event)
-        else:
-            try:
-                self.event_list[0].cancel()
-                self.event_list.clear()
-            except:
-                pass
-                
+        if self.manager.current == 'accounts':
+            MyAccountsWindow.load_accounts(self)
+
         if self.manager.current == 'login':
-            self.manager.get_screen("login").ids.spinner_id.values = db.accounts_list
+            self.manager.get_screen(self.manager.current).ids.spinner_id.values = db.accounts_list
         
+        if self.manager.current == 'add_new_account':
+            # AddAccountWindow.input_checker()
+            pass
+
+
+
+
+            # username_inp = self.manager.get_screen(self.manager.current).ids.username_input.text
+            # password_inp = self.manager.get_screen(self.manager.current).ids.password_input.text
+            # acc_id_inp = self.manager.get_screen(self.manager.current).ids.account_id_input.text
+
+            # if (username_inp and password_inp and acc_id_inp) != '':
+            #     AddAccountWindow.st(self)
+            #     app = VintedApp.get_running_app()
+            #     add_screen = app.root.get_screen('add_new_account')
+
+            #     bl = add_screen.sumbit_enabled
+            #     print(bl)
+
+            # print(username_inp)
+            # print(password_inp)
+            # print(acc_id_inp)
+            pass
+            #zrobic to moze na ekranie funckje i tu wywolac
+
+
+                
 
 
 
@@ -217,22 +216,19 @@ class MyAccountsWindow(Screen):
 
 
     def load_accounts(self, *args):
-        obj = self.manager.get_screen("accounts").ids
-        print('\n')
-        print('num_of_acc', self.number_of_acc)
-        print('obecna liczba kont:', len(db.accounts_list))
-        print('\n')
-        if self.manager.current == "accounts":
-            if self.number_of_acc != len(db.accounts_list):
-                db.load_accounts()
-                self.number_of_acc = len(db.accounts_list)
+        # print('dzziala')
+        obj = self.manager.get_screen(self.manager.current).ids
+    
+        if self.number_of_acc != len(db.accounts_list):
+            db.load_accounts()
+            self.number_of_acc = len(db.accounts_list)
 
-            for i in range(5):
-                try:
-                    obj[f'acc{str(i+1)}'].text = db.accounts_list[i]+' - press to show more info'
-            
-                except IndexError:
-                    obj[f'acc{str(i+1)}'].text = 'Empty!'
+        for i in range(5):
+            try:
+                obj[f'acc{str(i+1)}'].text = db.accounts_list[i]+' - press to show more info'
+        
+            except IndexError:
+                obj[f'acc{str(i+1)}'].text = 'Empty!'
 
 
 class AppSettingsWindow(Screen):
@@ -242,14 +238,39 @@ class AddAccountWindow(Screen):
     email = ObjectProperty(None)
     password = ObjectProperty(None)
     acc_id = ObjectProperty(None)
+
+    sumbit_enabled = BooleanProperty(False)
+
+    def st(self):
+        # print('dziala')
+        self.sumbit_enabled = True
     
+    def on_click_add_btn(self):
+        print(self.ids.username_input.text, self.ids.password_input.text, self.ids.account_id_input.text)
+
     def clear_inputs_fields(self):
         self.account_id_input.text = ''
         self.password_input.text = ''
         self.username_input.text = ''
 
+    def input_checker(self, *args):
+        pass
+        # obj = self.manager.get_screen(self.manager.current).ids
+        # print(obj)
 
 
+        
+
+
+        # name = obj['username_input'].text
+        # psw = obj['password_input'].text
+        # id = obj['account_id_input'].text
+
+        # print(name, psw, id)
+        # if (name and psw and id) == '':
+        #     AddAccountWindow.sumbit_enabled = True
+        # # print(obj['username_input'].text)
+        # # print(self.username_input)
 
 
 
@@ -269,7 +290,7 @@ class AccountPrinterLayout(StackLayout):
 
 
 
-kv = Builder.load_file("test_kv.kv")
+kv = Builder.load_file("vinted.kv")
 
 
 class VintedApp(App):
@@ -279,6 +300,3 @@ class VintedApp(App):
 
 if __name__ == "__main__":
     VintedApp().run()
-
-
-    #zrobic tak zeby moznz blylo odswiezac
