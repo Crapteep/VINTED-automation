@@ -202,8 +202,7 @@ class VintedSession():
                                     [self.acc_id, username, item_id, url, notification_date, today_date]
                                     )
 
-                else:
-                    print('juz jest')
+
     def run(self, acc_id) -> None:
         self.username, self.password = self.db.load_account_data(acc_id)
         self.acc_id = acc_id
