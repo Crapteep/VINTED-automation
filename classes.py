@@ -19,6 +19,7 @@ from selenium.webdriver.edge.service import Service
 from selenium import webdriver
 import pyautogui as pygui
 import re
+from datetime import datetime
 
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
@@ -75,8 +76,13 @@ class Database():
         return username, password
 
 
-    def insert_record(self, table : str, values : list) -> None:
-        self.c.execute(f'''INSERT OR IGNORE INTO {table}
+    def insert_record(self, table : str, columns : list, values : list) -> None:
+        if columns:
+            column_val = '(' + ', '.join([f'{column}' for column in columns]) + ')'
+        else:
+            column_val = ''
+
+        self.c.execute(f'''INSERT INTO {table}{column_val}
                         VALUES({','.join(['?' for _ in values])})''', values)
         self.con.commit()
 
@@ -85,7 +91,7 @@ class Database():
         values = conditions.values()
         self.c.execute(f'''SELECT {', '.join([f'{column}' for column in columns])}
                         FROM {table}
-                        WHERE {' and '.join([f'{condition}=?' for condition in conditions])}''',
+                        WHERE {' AND '.join([f'{condition}=?' for condition in conditions])}''',
                         tuple(values))
      
         return self.c.fetchall()
@@ -138,22 +144,103 @@ class Database():
         f = Fernet(key)
         return f.decrypt(encrypted_password).decode("utf-8")
 
-db = Database()
+
+class VintedSession():
+    def __init__(self, database) -> None:
+        self.db = database
+
+
+    def set_browser(self):
+        option = webdriver.EdgeOptions()
+        option.add_argument('inprivate')
+
+        s = Service(dir_webdriver)
+
+        self.browser = webdriver.Edge(service=s, options=option)
+        self.browser.implicitly_wait(RESPOND_TIME)
+        self.browser.maximize_window()
+
+
+    def log_in_to_account(self) -> None:
+        self.browser.get(url_login)
+        self.browser.find_element(By.ID, 'onetrust-accept-btn-handler').click()
+        self.browser.find_element(By.ID, 'username').send_keys(self.username)
+        self.browser.find_element(By.ID, 'password').send_keys(self.password + Keys.ENTER)
+
+        self.wait_until_complete_captcha()
+
+
+    def wait_until_complete_captcha(self) -> None:  #przy captcha img w gui jak prawidlowo ma wygladac
+        while True:
+            if self.browser.title == 'Vinted':
+                break
+            else:
+                pygui.alert('Complete captcha and press "Finish"!', 'Captcha', 'Finish!')
+            
+
+    def find_new_likes(self) -> None:
+        self.browser.get(url_notification)
+        notifications = self.browser.find_elements(By.CLASS_NAME, 'u-disable-hover')
+        
+        for notification in notifications:  
+            url = notification.get_attribute('href')
+            if KEY_STRING in url:
+                finder = re.compile(r'/\d\d\d\d\d\d\d\d\d\d/')
+                item_id = finder.findall(url)
+                item_id = int(item_id[0].replace('/', ''))
+
+                username = notification.find_element(By.XPATH, './/a').text
+                notification_time = notification.find_element(By.XPATH, './/h3//span').get_attribute('title')
+                notification_date = date_extract(notification_time)
+                time_now = datetime.now()
+                today_date = time_now.strftime("%Y-%m-%d, %H:%M:%S")
+
+ 
+                if not self.db.fetchall_record('*', 'Notifications', {'username' : username, 'item_id' : item_id, 'acc_id' : self.acc_id}):
+                    self.db.insert_record('Notifications',
+                                    ['acc_id', 'username', 'item_id', 'url', 'created', 'modified'],
+                                    [self.acc_id, username, item_id, url, notification_date, today_date]
+                                    )
+
+                else:
+                    print('juz jest')
+    def run(self, acc_id) -> None:
+        self.username, self.password = self.db.load_account_data(acc_id)
+        self.acc_id = acc_id
+
+        self.set_browser()
+        self.log_in_to_account()
+        self.find_new_likes()
+
+
+    def __del__(self):
+        self.browser.quit()
+
+
+
+
+
+
+
+
+# db = Database()
 
 
 
     
 
 
-Screens
+# Screens
 class MainWindow(Screen):
     target = ObjectProperty()
-    number_of_acc = len(db.accounts_list)
+    # number_of_acc = len(db.accounts_list)
     event_list = []
     def __init__(self, **kw):
         super().__init__(**kw)
         Clock.schedule_interval(self.update, 1/60)
 
+    def on_click(self):
+        s.run(90570960)
 
     def update(self, dt):
         
@@ -199,6 +286,9 @@ class LoginInWindow(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
 
+    def start(self):
+        s.run()
+
 
     def spinner_clicked(self, value):
         self.ids.click_label.text = f'You selected:{value}'
@@ -232,6 +322,8 @@ class MyAccountsWindow(Screen):
 
 
 class AppSettingsWindow(Screen):
+    def on_click(self):
+        s.browser.get('https://www.facebook.com/')
     pass
 
 class AddAccountWindow(Screen):
@@ -299,4 +391,11 @@ class VintedApp(App):
     
 
 if __name__ == "__main__":
+    db = Database(dir_dbase)
+    s = VintedSession(db)
+    
     VintedApp().run()
+    # s.run()
+    
+# s.browser.get('xd')
+# time.sleep(5)
