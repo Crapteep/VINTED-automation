@@ -1,0 +1,50 @@
+<Button>
+    width: 200
+    height: 50
+    background_normal: ''
+    background_color: (0,0,0,1)
+    
+
+
+<MyLayout>
+    BoxLayout1:
+        orientation: 'horizontal' 
+
+        Button:
+            text: 'menu'
+            pos_hint: {'center_x': .1}
+            size_hint: (None, None)
+            width: 200
+            height: 50
+        
+        Label:
+            text: 'Naglowek'
+        
+    BoxLayout:
+        orientation: 'vertical'
+        size: root.width, root.height
+        canvas.before:
+            Color:
+                rgba: (52/255.0,73/255.0,85/255.0,1)
+            Rectangle:
+                pos: self.pos
+        
+
+        #         size: root.width, root.height
+
+        padding: 10
+        spacing: 10
+
+        Label:
+            text: 'jpg'
+        Button:
+            text: 'przycisk 1'
+        Button:
+            text: 'przycisk 2'
+        Button:
+            text: 'przycisk 3'
+
+  
+        
+
+
