@@ -1,50 +1,90 @@
+WindowManager:
+    MainWindow:
+    LogingWindow:
+    AddAccountWindow:
+    SettingsWindow:
+
 <Button>
+
+    pos_hint: {'center_x': .5}
+    size_hint: (None, None)
     width: 200
     height: 50
+    background_color: (13/255.0,44/255.0,84/255.0,1)
     background_normal: ''
-    background_color: (0,0,0,1)
-    
 
 
-<MyLayout>
-    BoxLayout1:
-        orientation: 'horizontal' 
 
-        Button:
-            text: 'menu'
-            pos_hint: {'center_x': .1}
-            size_hint: (None, None)
-            width: 200
-            height: 50
-        
-        Label:
-            text: 'Naglowek'
-        
+
+
+
+<MainWindow>:
+    name: "main"
     BoxLayout:
-        orientation: 'vertical'
+        orientation: "vertical"
         size: root.width, root.height
-        canvas.before:
-            Color:
-                rgba: (52/255.0,73/255.0,85/255.0,1)
-            Rectangle:
-                pos: self.pos
-        
-
-        #         size: root.width, root.height
-
         padding: 10
         spacing: 10
+        Image:
+            source: 'vinted.png'
+            allow_stretch: True #rozciaga
+            keep_ratio: True #zachowuje proporcje
+            size_hint: (None, None)
+            width: 300
+            height: 250
+            pos_hint: {'center_x': .45, 'top': 1}
+
+
+            
+        Button:
+            text: 'Log in'
+            on_release: app.root.current = 'loging'
+        Button:
+            text: 'Accounts'
+        Button:
+            text: 'Settings'
+<LogingWindow>:
+    name: "loging"
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
+        padding: 50
+        spacing: 20
+
 
         Label:
-            text: 'jpg'
-        Button:
-            text: 'przycisk 1'
-        Button:
-            text: 'przycisk 2'
-        Button:
-            text: 'przycisk 3'
+            text: 'Username'
+            pos_hint: {'x':0, 'top': 1}
+            color: (1,0,0,1 )
+            width: 100
+            height: 10
+        TextInput:
+            text: 'lel'
+            pos_hint: {'x':0.75, 'top': 1}
+            width: 100
+            height: 10
 
-  
-        
+        Label:
+            text: 'Password'
+            pos_hint: {'x':0, 'bottom': 1}
+            color: (1,0,1,1 )
+            width: 100
+            height: 10
+        TextInput:
+            text: 'lel'
+            pos_hint: {'x':0.75, 'bottom':1 }
+            width: 100
+            height: 10
+            
 
+<AddAccountWindow>:
+    name: "accounts"
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
 
+<SettingsWindow>:
+    name: "settings"     
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
