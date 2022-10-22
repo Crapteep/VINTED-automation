@@ -46,9 +46,8 @@ CREATE TABLE Notifications
   username VARCHAR NOT NULL,
   created date NOT NULL,
   modified date NOT NULL,
-  reduction_1 INT DEFAULT 0 NOT NULL,
-  reduction_2 INT DEFAULT 0 NOT NULL,
   is_available INT DEFAULT 1 NOT NULL,
   personalized BOOL DEFAULT False NOT NULL,
+  discount INT,
   url VARCHAR NOT NULL
 );

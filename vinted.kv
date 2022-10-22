@@ -44,6 +44,7 @@ WindowManager:
             pos_hint: { "center_x": 0.5 }
             on_release:
                 app.root.current = "settings"
+                root.on_click()
 
 
 
@@ -73,6 +74,9 @@ WindowManager:
             Button:
                 text: 'go back'
                 on_release: app.root.current = 'main'
+            Button:
+                text: 'start'
+                on_release: root.start()
 
         Spinner:
             id: spinner_id
@@ -192,11 +196,19 @@ WindowManager:
 <AppSettingsWindow>:
     name: 'settings'
 
+    BoxLayout:
+        Button:
+            text: 'go'
+            on_release:
+                root.on_click()
+
 <AddAccountWindow>:
     name: 'add_new_account'
+
     username_input: username_input
     account_id_input: account_id_input
     password_input: password_input
+
     BoxLayout:
         orientation: "horizontal"
         BoxLayout:
@@ -207,6 +219,7 @@ WindowManager:
                     text: "Go back"
                     size_hint: 1, 0.1
                     on_release:
+                        root.input_checker()
                         root.clear_inputs_fields()
                         app.root.current = "accounts"
             BoxLayout:
@@ -222,7 +235,7 @@ WindowManager:
             
             Label:
                 text: "Login in"
-                # font_size: 50
+                font_size: 50
                 size_hint: 1, 0.2
                 width: "300dp"
                 pos_hint: { "center_x": 0.5 }
@@ -267,15 +280,47 @@ WindowManager:
                 size_hint: 1, 0.2
                 pos_hint: { "center_x": 0 }
 
+            # Label:
+            #     size_hint: 1, 0.2
+            #     id: 'info'
+            #     text: 'test'
+
             Button:
                 id: "button"
                 text: "Add account!"
                 size_hint: 1, 0.4
-                # disabled: not root.sumbit_enabled
+                disabled: not root.sumbit_enabled
                 on_release:
-                    # root.on_sumbit_click()
-                    root.clear_inputs_fileds()
+                    root.on_click_add_btn()
+                    root.clear_inputs_fields()
                     app.root.current = "accounts"
 
             
         BoxLayout:
+            orientation: 'vertical'
+
+            Label:
+                text: ''
+                size_hint: 1, 0.1
+
+            Label:
+                id: username_info
+                text: ''
+                font_size: 20
+                size_hint: 1, 0.2
+            
+            Label:
+                id: account_id_info
+                text: ''
+                font_size: 20
+                size_hint: 1, 0.2
+            
+            Label:
+                id: password_info
+                text: ''
+                font_size: 20
+                size_hint: 1, 0.2
+            
+            Label:
+                text: ''
+                size_hint: 1, 0.4
