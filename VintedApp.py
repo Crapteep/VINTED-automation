@@ -1,35 +1,32 @@
 from kivy.app import App
 from kivy.uix.widget import Widget
-from kivy.uix.label import Label
-from kivy.properties import ObjectProperty
 from kivy.lang import Builder
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.core.window import Window
 
-Builder.load_file('properties.kv')
+class MainWindow(Screen):
+    pass
 
-class MyLayout(Widget):
-    pass 
-    # name = ObjectProperty(None)
-    # pizza = ObjectProperty(None)
-    # color = ObjectProperty(None)
+class LogingWindow(Screen):
+    pass
 
-    
-    # def press(self):
-    #     name = self.name.text
-    #     pizza = self.pizza.text
-    #     color = self.color.text
-    #     #print( f'Hello {name}, you like {pizza} pizza, and your favourite color is {color}.')
-    #     # print it to the screen
-    #     self.add_widget(Label(text= f'Hello {name}, you like {pizza} pizza, and your favourite color is {color}.' ))
+class AddAccountWindow(Screen):
+    pass
 
-    #     #clear the input boxes
-    #     self.name.text = ""
-    #     self.pizza.text = ""
-    #     self.color.text = ""
+class SettingsWindow(Screen):
+    pass
 
-class VintedApp(App):
+class WindowManager(ScreenManager):
+    pass
+
+
+kv = Builder.load_file('properties.kv')
+
+
+class AwesomeApp(App):
     def build(self):
-        return MyLayout()
-
+        Window.clearcolor = (1,1,1,1)
+        return kv
 
 if __name__ == '__main__':
-    VintedApp().run()
+    AwesomeApp().run()
